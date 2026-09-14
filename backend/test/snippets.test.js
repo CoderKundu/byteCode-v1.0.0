@@ -144,10 +144,16 @@ test("concurrent first-opens of one database do not collide", async () => {
 
   const results = await Promise.all(opens)
   const failed = results.filter((r) => r.code !== 0)
-  assert.deepEqual(
-    failed.map((r) => r.stderr.trim().split("\n").at(-1)),
-    [],
-    "every process should have opened the database"
+
+  // Report the whole stderr of the first casualty. Summarising it — the last
+  // line, say — yields "Node.js v22.23.2", the version banner a crash prints
+  // last, which says nothing about what went wrong.
+  assert.equal(
+    failed.length,
+    0,
+    failed.length
+      ? `${failed.length}/8 processes failed to open the database. First failure:\n${failed[0].stderr}`
+      : ""
   )
 
   const opened = new SnippetStore({ dbPath, ttlDays: 90, idBytes: 9 })
